@@ -21,7 +21,7 @@ http_interactions:
       Content-Type:
       - text/html;charset=utf-8
       Date:
-      - Thu, 02 Apr 2015 09:24:49 GMT
+      - Thu, 02 Apr 2015 13:19:39 GMT
       Server:
       - nginx
       Status:
@@ -41,5 +41,5 @@ http_interactions:
       string: ERROR - Failed to generate PDF - please check you can access the url
         htp:/bad.url?icanhazpdf=123456abc
     http_version: 
-  recorded_at: Thu, 02 Apr 2015 09:24:50 GMT
+  recorded_at: Thu, 02 Apr 2015 13:19:40 GMT
 recorded_with: VCR 2.9.3

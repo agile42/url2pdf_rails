@@ -1,4 +1,3 @@
-require 'url2pdf_rails/configuration'
 require 'url2pdf'
 
 module Url2pdfRails
@@ -15,7 +14,10 @@ module Url2pdfRails
 
     # generate a pdf and return the http response
     def get_pdf_from(url, options = {})
-      Url2pdf::Client.new(Configuration.get_api_key).pdf_from_url(url, options)
+      server_options = {}
+      server_options.merge!(server_url: Rails.configuration.url2pdf_server_url) if Rails.configuration.respond_to?(:url2pdf_server_url)
+      server_options.merge!(timeout: Rails.configuration.url2pdf_timeout) if Rails.configuration.respond_to?(:url2pdf_timeout)
+      Url2pdf::Client.new(Rails.configuration.url2pdf_api_key, server_options).pdf_from_url(url, options)
     end
 
   end

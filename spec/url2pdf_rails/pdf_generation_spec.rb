@@ -2,18 +2,21 @@ require 'rails_helper'
 
 describe Url2pdfRails::PdfGeneration, :type => :controller do
 
-  let(:api_key) { "123456abc" }
-  before(:each) do
-    allow(Url2pdfRails::Configuration).to receive(:get_api_key).and_return(api_key)
-  end
+  let(:api_key) { '123456abc' }
+  let(:rails_config) { double("rails_config") }
 
-  controller(ActionController::Base) do
-    def report
-      render_pdf_from params[:report_url], {filename: params[:filename]}
-    end
+  before(:each) do
+    allow(rails_config).to receive(:url2pdf_api_key).and_return(api_key)
+    allow(Rails).to receive(:configuration).and_return(rails_config)
   end
 
   describe 'generate and render(send to browser) a pdf by calling render directly from a controller' do
+    controller(ActionController::Base) do
+      def report
+        render_pdf_from params[:report_url], {filename: params[:filename]}
+      end
+    end
+
     before(:each) do
       routes.draw do
         get "report" => "anonymous#report", as: :report
@@ -27,10 +30,6 @@ describe Url2pdfRails::PdfGeneration, :type => :controller do
         params = {report_url: 'http://google.com'}
         params.merge!(filename: filename) if filename.present?
         get :report, params
-      end
-
-      it 'configures the client with the api key' do
-        expect(Url2pdfRails::Configuration).to have_received(:get_api_key)
       end
 
       it 'sends it as pdf content type' do
@@ -60,14 +59,32 @@ describe Url2pdfRails::PdfGeneration, :type => :controller do
   end
 
   describe 'generate pdf by including module and calling get_pdf_from directly' do
-    subject { Class.new.include(Url2pdfRails::PdfGeneration).new.get_pdf_from(url) }
+    subject { Class.new.include(Url2pdfRails::PdfGeneration).new }
 
     context 'successful pdf generation request', vcr: {cassette_name: 'successful_pdf_generation'} do
       let(:url) { 'http://google.com' }
 
       it 'generates pdf and returns http response' do
-        expect(subject.code).to eq(200)
-        expect(subject.headers['Content-Type']).to eq "application/pdf"
+        response = subject.get_pdf_from(url)
+        expect(response.code).to eq(200)
+        expect(response.headers['Content-Type']).to eq "application/pdf"
+      end
+
+      context 'server options have been configured in rails env' do
+        let(:alternate_server_url) { "http://icanhazpdf.dev/generate_url" }
+        let(:timeout_override) { 1000 }
+
+        before(:each) do
+          allow(rails_config).to receive(:url2pdf_server_url).and_return(alternate_server_url)
+          allow(rails_config).to receive(:url2pdf_timeout).and_return(timeout_override)
+          client = Url2pdf::Client.new(api_key)
+          allow(Url2pdf::Client).to receive(:new).and_return(client)
+        end
+
+        it 'uses the configured server settings' do
+          subject.get_pdf_from(url)
+          expect(Url2pdf::Client).to have_received(:new).with(api_key, {server_url: alternate_server_url, timeout: timeout_override})
+        end
       end
     end
 
@@ -75,8 +92,9 @@ describe Url2pdfRails::PdfGeneration, :type => :controller do
       let(:url) { 'htp:/bad.url' }
 
       it 'generates pdf and returns http response with error message' do
-        expect(subject.code).to eq(400)
-        expect(subject.headers['Content-Type']).to eq "text/html;charset=utf-8"
+        response = subject.get_pdf_from(url)
+        expect(response.code).to eq(400)
+        expect(response.headers['Content-Type']).to eq "text/html;charset=utf-8"
       end
     end
   end

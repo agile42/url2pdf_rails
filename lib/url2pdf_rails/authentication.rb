@@ -1,5 +1,3 @@
-require 'url2pdf_rails/configuration'
-
 module Url2pdfRails
   module Authentication
 
@@ -57,7 +55,7 @@ module Url2pdfRails
 
     def valid_icanhazpdf_request?
       return false unless params[:icanhazpdf].present?
-      return params[:icanhazpdf] == Configuration.get_api_key
+      return params[:icanhazpdf] == Rails.configuration.url2pdf_api_key
     end
 
   end
