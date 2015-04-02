@@ -3,9 +3,9 @@ require 'rails_helper'
 describe Url2pdfRails::Authentication, :type => :controller do
 
   controller(ActionController::Base) do
-    before_filter :my_filter # typical authentication filter
+    before_filter :authenticate_admin! # probably in application controller
 
-    authenticate_as_pdf_request! only: [:report], skip_filter: :my_filter, devise_auth_model: 'admin'
+    authenticate_as_pdf_request! only: [:report], devise_fallback: [:admin, :blah]
 
     def index
       render text: "dummy route"
@@ -18,9 +18,7 @@ describe Url2pdfRails::Authentication, :type => :controller do
     def authenticate_admin! # stub for devise auth method
     end
 
-    private
-
-    def my_filter # typical authentication filter
+    def admin_signed_in? # stub for devise auth method
     end
   end
 
@@ -32,27 +30,27 @@ describe Url2pdfRails::Authentication, :type => :controller do
         get "report" => "anonymous#report"
       end
 
-      allow(subject).to receive(:my_filter)
+      allow(subject).to receive(:authenticate_admin!)
     end
 
-    describe 'skip filter' do
+    describe 'skip devise filters' do
       context 'action which is not specified in options' do
         it 'still runs the before filter' do
           get :index
-          expect(subject).to have_received(:my_filter)
+          expect(subject).to have_received(:authenticate_admin!)
         end
       end
 
       context 'action which is specified in options' do
         it 'skips the filter requested' do
           get :report
-          expect(subject).not_to have_received(:my_filter)
+          expect(subject).not_to have_received(:authenticate_admin!)
         end
       end
     end
 
     describe 'devise authentication fallback' do
-      context 'devise user model specified' do
+      context 'devise fallback model specified as admin' do
         context 'action which is specified in the options' do
           let(:api_key) { 'apikey1234567890' }
 
@@ -65,6 +63,16 @@ describe Url2pdfRails::Authentication, :type => :controller do
               get :report, icanhazpdf: api_key
               expect(response.code).to eq("200")
             end
+
+            it 'authenticated pdf request is true' do
+              get :report, icanhazpdf: api_key
+              expect(subject.authenticated_pdf_request?).to be true
+            end
+
+            it 'authenticated request is true' do
+              get :report, icanhazpdf: api_key
+              expect(subject.authenticated_request?).to be true
+            end
           end
 
           context 'invalid pdf request' do
@@ -73,18 +81,54 @@ describe Url2pdfRails::Authentication, :type => :controller do
               expect(response.code).to eq("401")
             end
 
-            context 'devise user is signed in' do
+            it 'authenticated pdf request is false' do
+              get :report, icanhazpdf: "not_a_valid_api_key"
+              expect(subject.authenticated_pdf_request?).to be false
+            end
+
+            it 'authenticated request is false' do
+              get :report, icanhazpdf: "not_a_valid_api_key"
+              expect(subject.authenticated_request?).to be false
+            end
+
+            context 'devise admin is signed in' do
               before(:each) do
-                allow(subject).to receive(:authenticate_admin!).and_return(true)
+                allow(subject).to receive(:admin_signed_in?).and_return(true)
               end
 
               it 'falls back to devise and completes action if devise auth is successful' do
                 get :report, icanhazpdf: "not_a_valid_api_key"
+                expect(subject).to have_received(:admin_signed_in?)
                 expect(response.code).to eq("200")
+              end
+
+              it 'authenticated pdf request is false' do
+                get :report, icanhazpdf: "not_a_valid_api_key"
+                expect(subject.authenticated_pdf_request?).to be false
+              end
+
+              it 'authenticated devise request is true' do
+                get :report, icanhazpdf: "not_a_valid_api_key"
+                expect(subject.authenticated_devise_request?).to be true
+              end
+
+              it 'authenticated request is true' do
+                get :report, icanhazpdf: "not_a_valid_api_key"
+                expect(subject.authenticated_request?).to be true
               end
             end
           end
         end
+      end
+    end
+
+    describe 'authenticated request?' do
+      it 'is available as a method in the controller' do
+        expect(subject.respond_to?(:authenticated_request?)).to be true
+      end
+
+      it 'defaults to false' do
+        expect(subject.authenticated_request?).to be false
       end
     end
 

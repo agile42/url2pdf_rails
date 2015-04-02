@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    url2pdf_rails (0.0.1)
+    url2pdf_rails (0.0.2)
       rails (~> 4.2)
       url2pdf (~> 0.0.1)
 
