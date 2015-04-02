@@ -15,16 +15,13 @@ describe Url2pdfRails::Authentication, :type => :controller do
       render text: "dummy report route"
     end
 
-    def authenticate_admin!
-      # stub for devise auth method
+    def authenticate_admin! # stub for devise auth method
     end
 
     private
 
-    def my_filter
-      # typical authentication filter
+    def my_filter # typical authentication filter
     end
-
   end
 
   describe 'authenticate as pdf request' do

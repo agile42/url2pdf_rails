@@ -9,13 +9,13 @@ module Url2pdfRails
       http_response = get_pdf_from url, options
       raise "Failed to generate pdf:\nCode: #{http_response.code}\nBody:\n#{http_response.body}" unless http_response.code == 200
 
-      filename = options[:filename] || "#{DateTime.now.to_formatted_s(:number)}.pdf"
+      filename = options[:filename] || "#{Date.today.to_s(:number)}.pdf"
       send_data http_response, :filename => filename, :type => :pdf
     end
 
     # generate a pdf and return the http response
     def get_pdf_from(url, options = {})
-      Url2pdf::Client.new(Configuration.get_api_key).pdf_from(url, options)
+      Url2pdf::Client.new(Configuration.get_api_key).pdf_from_url(url, options)
     end
 
   end
