@@ -18,10 +18,10 @@ Gem::Specification.new do |s|
   s.test_files = Dir["test/**/*"]
 
   s.add_dependency "rails", "~> 4.0"
-  s.add_dependency "url2pdf", "~> 0.0.1"
+  s.add_dependency "url2pdf", "~> 0.0.2"
 
   s.add_development_dependency "rspec-rails", "~> 3.2"
   s.add_development_dependency "guard-rspec", "~> 4.5"
   s.add_development_dependency "vcr", "~> 2.9"
-  s.add_development_dependency "webmock"
+  s.add_development_dependency "webmock", "~> 1.21"
 end
