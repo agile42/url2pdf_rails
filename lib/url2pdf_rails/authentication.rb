@@ -35,7 +35,7 @@ module Url2pdfRails
           end
           head 401
         end
-        before_filter authenticate_as_icanhazpdf_or_devise, options
+        prepend_before_filter authenticate_as_icanhazpdf_or_devise, options
       end
     end
 
@@ -54,8 +54,9 @@ module Url2pdfRails
     private
 
     def valid_icanhazpdf_request?
-      return false unless params[:icanhazpdf].present?
-      return params[:icanhazpdf] == Rails.configuration.url2pdf_api_key
+      return false unless params[:icanhazpdf].present? || (params[:webpage].present? && params[:webpage].include?('icanhazpdf'))
+      return params[:icanhazpdf] == Rails.configuration.url2pdf_api_key if params[:icanhazpdf].present?
+      CGI.parse(URI.parse(params[:webpage]).query)["icanhazpdf"].first == Rails.configuration.url2pdf_api_key
     end
 
   end

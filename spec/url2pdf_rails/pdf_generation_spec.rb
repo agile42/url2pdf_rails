@@ -23,7 +23,7 @@ describe Url2pdfRails::PdfGeneration, :type => :controller do
       end
     end
 
-    context 'successful pdf generation request', vcr: {cassette_name: 'successful_pdf_generation'} do
+    context 'successful pdf generation request', vcr: {cassette_name: 'successful_pdf_generation', record: :new_episodes} do
       let(:filename) { 'my_report.pdf' }
 
       before(:each) do
